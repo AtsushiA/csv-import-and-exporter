@@ -1,10 +1,18 @@
 <?php
+/**
+ * CSV download handler for CSV Import and Exporter plugin.
+ *
+ * @package CSV_Import_and_Exporter
+ */
+
+wp_raise_memory_limit( 'admin' );
+
 $errors = array();
 if (
     isset($_POST['type']) &&
     is_user_logged_in() &&
     isset($_POST['_wpnonce']) &&
-    wp_verify_nonce($_POST['_wpnonce'], 'csv_exporter') &&
+    wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'csv_exporter' ) &&
     (current_user_can('administrator') || current_user_can('editor'))
 ) {
     check_admin_referer('csv_exporter');
@@ -15,27 +23,43 @@ if (
     }
 
     global $wpdb;
-    $post_type = get_post_type_object(sanitize_text_field($_POST['type']));
+    $post_type = get_post_type_object( sanitize_text_field( wp_unslash( $_POST['type'] ) ) );
     $posts_values = array();
     if (isset($_POST['posts_values']) && !empty($_POST['posts_values']) && is_array($_POST['posts_values'])) {
         foreach ($_POST['posts_values'] as $posts_value) {
-            $posts_values[] = sanitize_text_field($posts_value);
+            $posts_values[] = sanitize_text_field( wp_unslash( $posts_value ) );
         }
     }
     $post_status = array();
     if (isset($_POST['post_status']) && !empty($_POST['post_status']) && is_array($_POST['post_status'])) {
         foreach ($_POST['post_status'] as $post_status_value) {
-            $post_status[] = sanitize_text_field($post_status_value);
+            $post_status[] = sanitize_text_field( wp_unslash( $post_status_value ) );
         }
     }
-    $limit = absint(sanitize_text_field($_POST['limit']));
-    $offset = absint(sanitize_text_field($_POST['offset']));
-    $order_by = sanitize_text_field($_POST['order_by']);
-    $post_date_from = sanitize_text_field($_POST['post_date_from']);
-    $post_date_to = sanitize_text_field($_POST['post_date_to']);
-    $post_modified_from = sanitize_text_field($_POST['post_modified_from']);
-    $post_modified_to = sanitize_text_field($_POST['post_modified_to']);
-    $string_code = sanitize_text_field($_POST['string_code']);
+    $limit = isset( $_POST['limit'] )
+        ? absint( sanitize_text_field( wp_unslash( $_POST['limit'] ) ) )
+        : 0;
+    $offset = isset( $_POST['offset'] )
+        ? absint( sanitize_text_field( wp_unslash( $_POST['offset'] ) ) )
+        : 0;
+    $order_by = isset( $_POST['order_by'] )
+        ? sanitize_text_field( wp_unslash( $_POST['order_by'] ) )
+        : 'DESC';
+    $post_date_from = isset( $_POST['post_date_from'] )
+        ? sanitize_text_field( wp_unslash( $_POST['post_date_from'] ) )
+        : '';
+    $post_date_to = isset( $_POST['post_date_to'] )
+        ? sanitize_text_field( wp_unslash( $_POST['post_date_to'] ) )
+        : '';
+    $post_modified_from = isset( $_POST['post_modified_from'] )
+        ? sanitize_text_field( wp_unslash( $_POST['post_modified_from'] ) )
+        : '';
+    $post_modified_to = isset( $_POST['post_modified_to'] )
+        ? sanitize_text_field( wp_unslash( $_POST['post_modified_to'] ) )
+        : '';
+    $string_code = isset( $_POST['string_code'] )
+        ? sanitize_text_field( wp_unslash( $_POST['string_code'] ) )
+        : 'UTF-8';
 
     // SQL文作成
     $query = "";
@@ -43,8 +67,7 @@ if (
     $value_parameter = array();
 
     // wp_postsテーブルから指定したpost_typeの公開記事を取得
-    $query_select = 'ID as %s, post_type, post_status';
-    $value_parameter[] = 'post_id';
+    $query_select = 'ID as post_id, post_type, post_status';
     if (!empty($posts_values)) {
         foreach ($posts_values as $key => $value) {
             $query_select .= ', ' . sanitize_key($value);
@@ -105,159 +128,125 @@ if (
     $results = $wpdb->get_results($prepare, ARRAY_A);
 
     // カテゴリとタグのslugを追加
-    $results = array_map(
-        function ($result) {
-            //マージ用の配列
-            $customs_array = array();
-            $result_post_id = absint($result['post_id']);
-            /**
-             * フィルター追加
-             */
-            // TODO: フィルター追加処理をまとめる
-            // foreach ($posts_values as $key => $value) {
-            //  $_result = apply_filters( 'wp_csv_exporter_'.$value, $result[$value], $result_post_id );
-            //  $customs_array += array( $value => $_result );
-            // }
+    foreach ( $results as $index => $result ) {
+        $customs_array  = array();
+        $result_post_id = absint( $result['post_id'] );
 
-            //スラッグ
-            if (isset($result['post_name'])) {
-                $post_name = apply_filters('wp_csv_exporter_post_name', $result['post_name'], $result_post_id);
-                $customs_array += array('post_name' => $post_name);
-            }
-            //タイトル
-            if (isset($result['post_title'])) {
-                $post_title = apply_filters('wp_csv_exporter_post_title', $result['post_title'], $result_post_id);
-                $customs_array += array('post_title' => $post_title);
-            }
-            //本文
-            if (isset($result['post_content'])) {
-                $post_content = apply_filters('wp_csv_exporter_post_content', $result['post_content'], $result_post_id);
-                $customs_array += array('post_content' => $post_content);
-            }
-            //抜粋
-            if (isset($result['post_excerpt'])) {
-                $post_excerpt = apply_filters('wp_csv_exporter_post_excerpt', $result['post_excerpt'], $result_post_id);
-                $customs_array += array('post_excerpt' => $post_excerpt);
-            }
-            //ステータス
-            if (isset($result['post_status'])) {
-                $post_status = apply_filters('wp_csv_exporter_post_status', $result['post_status'], $result_post_id);
-                $customs_array += array('post_status' => $post_status);
-            }
-            //公開日時
-            if (isset($result['post_date'])) {
-                $post_date = apply_filters('wp_csv_exporter_post_date', $result['post_date'], $result_post_id);
-                $customs_array += array('post_date' => $post_date);
-            }
-            //変更日時
-            if (isset($result['post_modified'])) {
-                $post_modified = apply_filters('wp_csv_exporter_post_modified', $result['post_modified'], $result_post_id);
-                $customs_array += array('post_modified' => $post_modified);
-            }
-            //投稿者
-            if (isset($result['post_author'])) {
-                $post_author = apply_filters('wp_csv_exporter_post_author', $result['post_author'], $result_post_id);
-                $customs_array += array('post_author' => $post_author);
-            }
-            //サムネイル
-            if (!empty($_POST['post_thumbnail']) && $_POST['post_thumbnail'] == true) {
-                $thumbnail_id = get_post_thumbnail_id($result_post_id);
-                $thumbnail_url_array = wp_get_attachment_image_src($thumbnail_id, true);
-                $thumbnail_url = apply_filters('wp_csv_exporter_thumbnail_url', $thumbnail_url_array[0], $result_post_id);
-                $customs_array += array($_POST['post_thumbnail'] => $thumbnail_url);
-            }
-
-            // $post系
-            $the_post = get_post($result_post_id);
-            if (!empty($_POST['post_parent']) && $_POST['post_parent'] == true) {
-                $post_parent = apply_filters('wp_csv_exporter_post_parent', $the_post->post_parent, $result_post_id);
-                $customs_array += array('post_parent' => $post_parent);
-            }
-            if (!empty($_POST['menu_order']) && $_POST['menu_order'] == true) {
-                $menu_order = apply_filters('wp_csv_exporter_menu_order', $the_post->menu_order, $result_post_id);
-                $customs_array += array('menu_order' => $menu_order);
-            }
-
-            //タグ
-            if (!empty($_POST['post_tags'] && $_POST['post_tags'] == true)) {
-                $tags = get_the_tags($result_post_id, esc_html($_POST['post_tags']));
-                if (is_array($tags)) {
-                    $post_tags = array_map(
-                        function ($tag) {
-                            return $tag->slug;
-                        },
-                        $tags
-                    );
-                    $post_tags = apply_filters('wp_csv_exporter_post_tags', $post_tags, $result_post_id);
-                    $post_tags = urldecode(implode(',', $post_tags));
-                    $customs_array += array($_POST['post_tags'] => $post_tags);
-                } else {
-                    $customs_array += array($_POST['post_tags'] => '');
-                }
-            }
-
-            //カスタムタクソノミー
-            if (!empty($_POST['taxonomies']) && is_array($_POST['taxonomies'])) {
-                foreach ($_POST['taxonomies'] as $key => $taxonomy) {
-                    $terms = get_the_terms($result_post_id, esc_html($taxonomy));
-
-                    if (is_array($terms)) {
-
-                        // Modify 'head name' for "Really Simple CSV Importer"
-                        if ($taxonomy == 'category') {
-                            $head_name = 'post_category';
-                        } else {
-                            //カスタムタクソノミー時
-                            $head_name = 'tax_' . $taxonomy;
-                        }
-
-                        //$term_values
-                        $term_values = array_map(
-                            function ($term) {
-                            return $term->slug;
-                        },
-                            $terms
-                        );
-
-                        $term_values = apply_filters('wp_csv_exporter_' . $head_name, $term_values, $result_post_id);
-                        $term_values = urldecode(implode(',', $term_values));
-                        $customs_array += array($head_name => $term_values);
-
-                    } else {
-                        //タクソノミーが空の時
-                        if ($taxonomy == 'category') {
-                            $head_name = 'post_category';
-                        } else {
-                            $head_name = 'tax_' . $taxonomy;
-                        }
-
-                        $term_values = null;
-                        $term_values = apply_filters('wp_csv_exporter_' . $head_name, $term_values, $result_post_id);
-                        $customs_array += array($head_name => $term_values);
-                    }
-
-                }
-            }
-
-            // カスタムフィールドを取得
-            $fields = get_post_custom($result_post_id);
-            if (!empty($fields) && !empty($_POST['cf_fields'])) {
-                foreach ($_POST['cf_fields'] as $key => $value) {
-                    //チェックしたフィールドだけを取得
-                    $field = $fields[$value];
-                    //アンダーバーから始まるのは削除
-                    if (!preg_match('/^_.*/', $value)) {
-                        $field = apply_filters('wp_csv_exporter_' . $value, $field[0], $result_post_id);
-                        $customs_array += array($value => $field);
-                    }
-                }
-            }
-
-            return array_merge($result, $customs_array);
+        //スラッグ
+        if (isset($result['post_name'])) {
+            $post_name = apply_filters('wp_csv_exporter_post_name', $result['post_name'], $result_post_id);
+            $customs_array += array('post_name' => $post_name);
         }
-        ,
-        $results
-    );
+        //タイトル
+        if (isset($result['post_title'])) {
+            $post_title = apply_filters('wp_csv_exporter_post_title', $result['post_title'], $result_post_id);
+            $customs_array += array('post_title' => $post_title);
+        }
+        //本文
+        if (isset($result['post_content'])) {
+            $post_content = apply_filters('wp_csv_exporter_post_content', $result['post_content'], $result_post_id);
+            $customs_array += array('post_content' => $post_content);
+        }
+        //抜粋
+        if (isset($result['post_excerpt'])) {
+            $post_excerpt = apply_filters('wp_csv_exporter_post_excerpt', $result['post_excerpt'], $result_post_id);
+            $customs_array += array('post_excerpt' => $post_excerpt);
+        }
+        //ステータス
+        if (isset($result['post_status'])) {
+            $post_status_val = apply_filters('wp_csv_exporter_post_status', $result['post_status'], $result_post_id);
+            $customs_array  += array('post_status' => $post_status_val);
+        }
+        //公開日時
+        if (isset($result['post_date'])) {
+            $post_date = apply_filters('wp_csv_exporter_post_date', $result['post_date'], $result_post_id);
+            $customs_array += array('post_date' => $post_date);
+        }
+        //変更日時
+        if (isset($result['post_modified'])) {
+            $post_modified = apply_filters('wp_csv_exporter_post_modified', $result['post_modified'], $result_post_id);
+            $customs_array += array('post_modified' => $post_modified);
+        }
+        //投稿者
+        if (isset($result['post_author'])) {
+            $post_author = apply_filters('wp_csv_exporter_post_author', $result['post_author'], $result_post_id);
+            $customs_array += array('post_author' => $post_author);
+        }
+        //サムネイル
+        if (!empty($_POST['post_thumbnail']) && $_POST['post_thumbnail'] == true) { // phpcs:ignore WordPress.Security.NonceVerification
+            $thumbnail_id        = get_post_thumbnail_id($result_post_id);
+            $thumbnail_url_array = wp_get_attachment_image_src($thumbnail_id, true);
+            $thumbnail_url       = apply_filters('wp_csv_exporter_thumbnail_url', $thumbnail_url_array[0], $result_post_id);
+            $customs_array      += array($_POST['post_thumbnail'] => $thumbnail_url); // phpcs:ignore WordPress.Security.NonceVerification
+        }
+
+        // $post系
+        $the_post = get_post($result_post_id);
+        if (!empty($_POST['post_parent']) && $_POST['post_parent'] == true) { // phpcs:ignore WordPress.Security.NonceVerification
+            $post_parent   = apply_filters('wp_csv_exporter_post_parent', $the_post->post_parent, $result_post_id);
+            $customs_array += array('post_parent' => $post_parent);
+        }
+        if (!empty($_POST['menu_order']) && $_POST['menu_order'] == true) { // phpcs:ignore WordPress.Security.NonceVerification
+            $menu_order    = apply_filters('wp_csv_exporter_menu_order', $the_post->menu_order, $result_post_id);
+            $customs_array += array('menu_order' => $menu_order);
+        }
+
+        //タグ
+        if ( ! empty( $_POST['post_tags'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+            $tags = get_the_tags($result_post_id);
+            if (is_array($tags)) {
+                $post_tags = wp_list_pluck( $tags, 'slug' );
+                $post_tags = apply_filters('wp_csv_exporter_post_tags', $post_tags, $result_post_id);
+                $post_tags = urldecode(implode(',', $post_tags));
+                $customs_array += array($_POST['post_tags'] => $post_tags); // phpcs:ignore WordPress.Security.NonceVerification
+            } else {
+                $customs_array += array($_POST['post_tags'] => ''); // phpcs:ignore WordPress.Security.NonceVerification
+            }
+        }
+
+        //カスタムタクソノミー
+        if (!empty($_POST['taxonomies']) && is_array($_POST['taxonomies'])) { // phpcs:ignore WordPress.Security.NonceVerification
+            foreach ($_POST['taxonomies'] as $taxonomy) { // phpcs:ignore WordPress.Security.NonceVerification
+                $terms = get_the_terms($result_post_id, sanitize_key($taxonomy));
+
+                if ($taxonomy == 'category') {
+                    $head_name = 'post_category';
+                } else {
+                    $head_name = 'tax_' . $taxonomy;
+                }
+
+                if (is_array($terms)) {
+                    $term_values = wp_list_pluck( $terms, 'slug' );
+                    $term_values = apply_filters('wp_csv_exporter_' . $head_name, $term_values, $result_post_id);
+                    $term_values = urldecode(implode(',', $term_values));
+                } else {
+                    $term_values = '';
+                    $term_values = apply_filters('wp_csv_exporter_' . $head_name, $term_values, $result_post_id);
+                }
+                $customs_array += array($head_name => $term_values);
+            }
+        }
+
+        // カスタムフィールドを取得
+        $fields = get_post_custom($result_post_id);
+        if (!empty($fields) && !empty($_POST['cf_fields'])) { // phpcs:ignore WordPress.Security.NonceVerification
+            foreach ($_POST['cf_fields'] as $cf_key) { // phpcs:ignore WordPress.Security.NonceVerification
+                //チェックしたフィールドだけを取得
+                $field = isset( $fields[ $cf_key ] ) ? $fields[ $cf_key ] : null;
+                //アンダーバーから始まるのは削除
+                if (!preg_match('/^_.*/', $cf_key)) {
+                    $field_value    = isset( $field[0] ) ? $field[0] : '';
+                    $field_value    = apply_filters( 'wp_csv_exporter_' . $cf_key, $field_value, $result_post_id );
+                    $customs_array += array( $cf_key => $field_value );
+                }
+            }
+        }
+
+        $results[ $index ] = array_merge( $result, $customs_array );
+
+        // 1投稿処理するごとにキャッシュを解放してメモリ使用量を抑制する
+        clean_post_cache( $result_post_id );
+    }
     //結果があれば
     if (!empty($results)) {
         // 項目名を取得
@@ -287,6 +276,7 @@ if (
         header('Content-Length:' . filesize($filepath)); //ファイルサイズを指定
         readfile($filepath); //ダウンロード
         unlink($filepath);
+        exit;
 
     } else {
         //結果がない場合
@@ -300,7 +290,7 @@ if (
 //エラー表示
 if (!empty($errors)) {
     foreach ($errors as $key => $value) {
-        echo wp_kses($value) . PHP_EOL;
+        echo esc_html($value) . PHP_EOL;
     }
     return;
 

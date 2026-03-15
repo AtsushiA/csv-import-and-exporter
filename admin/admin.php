@@ -88,7 +88,7 @@ if ($wce_options = get_option('wce_options')) {
             <div class="error">
                 <p>
                     <?php $this->e('Please adjust your permissions so that you are able to edit the below directory.', '以下のディクレトリに書き込みができるようにパーミッションを変更してください。') ?><br>
-                    <strong><?php echo wp_kses($filename); ?></strong>
+                    <strong><?php echo esc_html( $filename ); ?></strong>
                 </p>
             </div>
         <?php endif; ?>
