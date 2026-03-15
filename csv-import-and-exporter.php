@@ -3,7 +3,7 @@
  * Plugin Name: CSV Import and Exporter
  * Description: You can import & export posts in CSV format for each post type. It is compatible with posts' custom fields and custom taxonomies. It is also possible to set the number or date range of posts to download.
  * Author: Nakashima Masahiro
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author URI: http://www.kigurumi.asia
  * License: GPLv2 or later
  * Text Domain: wp-csv-im-n-exporter
@@ -17,8 +17,14 @@ if ( class_exists( 'CSV_Import_and_Exporter' ) ) {
 }
 
 require __DIR__ . '/classes/csviae-base.php';
+require __DIR__ . '/classes/class-csviae-exporter.php';
 
-define( 'CSVIAE_PLUGIN_VERSION', '1.0.2' );
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	require __DIR__ . '/classes/class-csviae-cli-command.php';
+	WP_CLI::add_command( 'csv-export', 'CSVIAE_CLI_Command' );
+}
+
+define( 'CSVIAE_PLUGIN_VERSION', '1.0.3' );
 define( 'CSVIAE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'CSVIAE_PLUGIN_NAME', trim( dirname( CSVIAE_PLUGIN_BASENAME ), '/' ) );
 define( 'CSVIAE_PLUGIN_IMPORT_NAME', 'wp-csv-importer' );
