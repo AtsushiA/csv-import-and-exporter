@@ -56,7 +56,9 @@ jobs:
           rm -rf vendor
           composer install --no-interaction
       - name: Install WordPress test suite
-        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wp }} true
+        # 6th arg false: the mysql service does not pre-create the DB, so let the
+        # script create wordpress_test (no interactive prompt since it doesn't exist yet).
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wp }} false
       - name: Run PHPUnit
         env:
           WP_TESTS_DIR: /tmp/wordpress-tests-lib
