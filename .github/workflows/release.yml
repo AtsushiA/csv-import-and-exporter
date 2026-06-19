@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve plugin metadata
+        id: meta
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+        run: |
+          PLUGIN_SLUG=$(basename "$PWD")
+          echo "slug=${PLUGIN_SLUG}" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches plugin header version
+        env:
+          SLUG: ${{ steps.meta.outputs.slug }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          HEADER_VERSION=$(grep -oiP 'Version:\s*\K[0-9]+\.[0-9]+\.[0-9]+' "${SLUG}.php")
+          if [ "$HEADER_VERSION" != "$VERSION" ]; then
+            echo "::error::Tag ($VERSION) does not match plugin header version ($HEADER_VERSION)"
+            exit 1
+          fi
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Build the plugin zip
+        env:
+          SLUG: ${{ steps.meta.outputs.slug }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          BUILD_DIR="build/${SLUG}"
+          mkdir -p "$BUILD_DIR"
+          rsync -a --exclude-from='.distignore' ./ "$BUILD_DIR/"
+          ( cd build && zip -r "../${SLUG}-${VERSION}.zip" "${SLUG}" )
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.meta.outputs.slug }}-${{ steps.meta.outputs.version }}.zip
+          generate_release_notes: true

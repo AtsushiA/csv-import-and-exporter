@@ -1,4 +1,10 @@
 <?php
+/**
+ * Export settings view template.
+ *
+ * @package CSV_Import_and_Exporter
+ */
+
 // ダウンロードフォルダ
 $filename = CSVIAE_PLUGIN_DIR . '/download/';
 

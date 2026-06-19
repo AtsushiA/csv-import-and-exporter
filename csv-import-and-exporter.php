@@ -152,7 +152,7 @@ INNER JOIN $wpdb->posts
 WHERE $wpdb->posts.post_type = '%s'
 AND $wpdb->postmeta.meta_key NOT LIKE '%s'
 EOL;
-		return $wpdb->get_results( $wpdb->prepare( $query, array( $value_parameter, $pattern ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return $wpdb->get_results( $wpdb->prepare( $query, array( $value_parameter, $pattern ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**

@@ -99,13 +99,13 @@ class CSVIAE_CLI_Command extends WP_CLI_Command {
 		$post_type = \WP_CLI\Utils\get_flag_value( $assoc_args, 'post-type', 'post' );
 
 		// --status: comma-separated → array, or null for default.
-		$status_raw = \WP_CLI\Utils\get_flag_value( $assoc_args, 'status', null );
+		$status_raw  = \WP_CLI\Utils\get_flag_value( $assoc_args, 'status', null );
 		$post_status = $status_raw
 			? array_map( 'trim', explode( ',', $status_raw ) )
 			: array( 'publish', 'pending', 'draft', 'future', 'private' );
 
 		// --fields: comma-separated → array, or all fields.
-		$fields_raw  = \WP_CLI\Utils\get_flag_value( $assoc_args, 'fields', null );
+		$fields_raw   = \WP_CLI\Utils\get_flag_value( $assoc_args, 'fields', null );
 		$posts_values = $fields_raw
 			? array_map( 'trim', explode( ',', $fields_raw ) )
 			: CSVIAE_Exporter::ALL_POSTS_VALUES;
