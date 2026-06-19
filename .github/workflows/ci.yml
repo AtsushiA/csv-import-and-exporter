@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  phpcs:
+    name: phpcs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+      - run: composer install --no-interaction
+      - run: composer run phpcs
+
+  phpunit:
+    name: "PHPUnit (WP ${{ matrix.wp }} / PHP ${{ matrix.php }})"
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - wp: latest
+            php: '8.3'
+          - wp: latest
+            php: '8.2'
+          - wp: '6.6'
+            php: '8.2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer
+          extensions: mysqli
+      - name: Install Composer dependencies
+        run: |
+          rm -rf vendor
+          composer install --no-interaction
+      - name: Install WordPress test suite
+        # 6th arg false: the mysql service does not pre-create the DB, so let the
+        # script create wordpress_test (no interactive prompt since it doesn't exist yet).
+        run: bash bin/install-wp-tests.sh wordpress_test root root 127.0.0.1 ${{ matrix.wp }} false
+      - name: Run PHPUnit
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+        run: vendor/bin/phpunit --bootstrap tests/phpunit/bootstrap.php
+
+  plugin-check:
+    name: Plugin Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wordpress/plugin-check-action@v1
+        with:
+          exclude-directories: 'vendor,tests,node_modules,import'
+          ignore-warnings: true
+          categories: |
+            general
+            performance
+            accessibility
+            security

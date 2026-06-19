@@ -2,7 +2,7 @@
 
 WordPress プラグイン。投稿タイプごとに CSV 形式でエクスポート／インポートができます。カスタムフィールド・カスタムタクソノミーに対応し、件数や日付範囲での絞り込みも可能です。
 
-**Version:** 1.0.3
+**Version:** 1.1.0
 **License:** GPLv2 or later
 
 ---
@@ -163,6 +163,13 @@ csv-import-and-exporter/
 ---
 
 ## Changelog
+
+### 1.1.0 — 2026-06-20
+- 開発・CI 基盤を整備：phpcs（WPCS）、PHPUnit 統合テスト、Plugin Check を GitHub Actions で自動実行
+- `CSVIAE_Exporter` の統合テストを追加（`tests/phpunit/`）
+- タグ push でプラグイン zip をビルドして GitHub Release を作成するワークフローを追加
+- 主要エントリ PHP ファイルに直接アクセス防止ガード（`ABSPATH`）を追加
+- phpcs 指摘の修正（出力エスケープ・ドキュメントコメント・prepared SQL 注釈）
 
 ### 1.0.3 — 2026-03-16
 - WP-CLI コマンド `wp csv-export export` を追加

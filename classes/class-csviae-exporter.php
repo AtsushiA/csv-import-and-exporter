@@ -82,6 +82,8 @@ class CSVIAE_Exporter {
 	 * Constructor.
 	 *
 	 * @param array $args {
+	 *   Export configuration arguments.
+	 *
 	 *   @type string     $post_type          Post type slug (required).
 	 *   @type array      $posts_values       wp_posts columns to export. Default: all standard fields.
 	 *   @type array      $post_status        Post statuses. Default: publish/pending/draft/future/private.
@@ -220,17 +222,17 @@ class CSVIAE_Exporter {
 		}
 
 		// AND post_type.
-		$query           .= "AND post_type LIKE '%s' ";
+		$query            .= "AND post_type LIKE '%s' ";
 		$value_parameter[] = $this->post_type_obj->name;
 
 		// Date range filters.
 		if ( $this->post_date_from && $this->post_date_to ) {
-			$query           .= "AND post_date BETWEEN '%s' AND '%s' ";
+			$query            .= "AND post_date BETWEEN '%s' AND '%s' ";
 			$value_parameter[] = $this->post_date_from . ' 00:00:00';
 			$value_parameter[] = $this->post_date_to . ' 23:59:59';
 		}
 		if ( $this->post_modified_from && $this->post_modified_to ) {
-			$query           .= "AND post_modified BETWEEN '%s' AND '%s' ";
+			$query            .= "AND post_modified BETWEEN '%s' AND '%s' ";
 			$value_parameter[] = $this->post_modified_from . ' 00:00:00';
 			$value_parameter[] = $this->post_modified_to . ' 23:59:59';
 		}
@@ -244,11 +246,11 @@ class CSVIAE_Exporter {
 
 		// LIMIT / OFFSET.
 		if ( $this->limit > 0 ) {
-			$query           .= 'LIMIT %d ';
+			$query            .= 'LIMIT %d ';
 			$value_parameter[] = $this->limit;
 
 			if ( $this->offset > 0 ) {
-				$query           .= 'OFFSET %d ';
+				$query            .= 'OFFSET %d ';
 				$value_parameter[] = $this->offset;
 			}
 		}
@@ -294,7 +296,7 @@ class CSVIAE_Exporter {
 
 		// Thumbnail.
 		if ( $this->post_thumbnail ) {
-			$thumbnail_url_array  = wp_get_attachment_image_src( get_post_thumbnail_id( $result_post_id ), true );
+			$thumbnail_url_array             = wp_get_attachment_image_src( get_post_thumbnail_id( $result_post_id ), true );
 			$customs_array['post_thumbnail'] = apply_filters(
 				'wp_csv_exporter_thumbnail_url',
 				isset( $thumbnail_url_array[0] ) ? $thumbnail_url_array[0] : '',
@@ -317,8 +319,8 @@ class CSVIAE_Exporter {
 		if ( $this->post_tags ) {
 			$tags = get_the_tags( $result_post_id );
 			if ( is_array( $tags ) ) {
-				$post_tags_val = wp_list_pluck( $tags, 'slug' );
-				$post_tags_val = apply_filters( 'wp_csv_exporter_post_tags', $post_tags_val, $result_post_id );
+				$post_tags_val              = wp_list_pluck( $tags, 'slug' );
+				$post_tags_val              = apply_filters( 'wp_csv_exporter_post_tags', $post_tags_val, $result_post_id );
 				$customs_array['post_tags'] = urldecode( implode( ',', $post_tags_val ) );
 			} else {
 				$customs_array['post_tags'] = '';
@@ -327,16 +329,16 @@ class CSVIAE_Exporter {
 
 		// Taxonomies.
 		foreach ( $this->taxonomies as $taxonomy ) {
-			$head_name   = ( 'category' === $taxonomy ) ? 'post_category' : 'tax_' . $taxonomy;
-			$terms       = get_the_terms( $result_post_id, $taxonomy );
+			$head_name = ( 'category' === $taxonomy ) ? 'post_category' : 'tax_' . $taxonomy;
+			$terms     = get_the_terms( $result_post_id, $taxonomy );
 
 			if ( is_array( $terms ) ) {
-				$term_values = wp_list_pluck( $terms, 'slug' );
-				$term_values = apply_filters( 'wp_csv_exporter_' . $head_name, $term_values, $result_post_id );
+				$term_values                 = wp_list_pluck( $terms, 'slug' );
+				$term_values                 = apply_filters( 'wp_csv_exporter_' . $head_name, $term_values, $result_post_id );
 				$customs_array[ $head_name ] = urldecode( implode( ',', $term_values ) );
 			} else {
-				$term_values = '';
-				$term_values = apply_filters( 'wp_csv_exporter_' . $head_name, $term_values, $result_post_id );
+				$term_values                 = '';
+				$term_values                 = apply_filters( 'wp_csv_exporter_' . $head_name, $term_values, $result_post_id );
 				$customs_array[ $head_name ] = $term_values;
 			}
 		}
@@ -348,9 +350,9 @@ class CSVIAE_Exporter {
 				if ( preg_match( '/^_/', $cf_key ) ) {
 					continue;
 				}
-				$field       = isset( $fields[ $cf_key ] ) ? $fields[ $cf_key ] : null;
-				$field_value = isset( $field[0] ) ? $field[0] : '';
-				$field_value = apply_filters( 'wp_csv_exporter_' . $cf_key, $field_value, $result_post_id );
+				$field                    = isset( $fields[ $cf_key ] ) ? $fields[ $cf_key ] : null;
+				$field_value              = isset( $field[0] ) ? $field[0] : '';
+				$field_value              = apply_filters( 'wp_csv_exporter_' . $cf_key, $field_value, $result_post_id );
 				$customs_array[ $cf_key ] = $field_value;
 			}
 		}
@@ -387,7 +389,7 @@ INNER JOIN $wpdb->posts ON $wpdb->posts.ID = $wpdb->postmeta.post_id
 WHERE $wpdb->posts.post_type = '%s'
 AND $wpdb->postmeta.meta_key NOT LIKE '\_%'
 EOL;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $query, $this->post_type_obj->name ), ARRAY_A );
 		return $rows ? array_column( $rows, 'meta_key' ) : array();
 	}

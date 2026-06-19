@@ -1,0 +1,16 @@
+# Dependencies (rebuilt in CI / release with composer install).
+vendor/
+node_modules/
+
+# wp-env
+.wp-env.override.json
+debug.log
+db.sql
+
+# Test / build artifacts
+.phpunit.result.cache
+build/
+test-results/
+
+# Plugin runtime output
+download/

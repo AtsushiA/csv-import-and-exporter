@@ -3,7 +3,7 @@
  * Plugin Name: CSV Import and Exporter
  * Description: You can import & export posts in CSV format for each post type. It is compatible with posts' custom fields and custom taxonomies. It is also possible to set the number or date range of posts to download.
  * Author: Nakashima Masahiro
- * Version: 1.0.3
+ * Version: 1.1.0
  * Author URI: http://www.kigurumi.asia
  * License: GPLv2 or later
  * Text Domain: wp-csv-im-n-exporter
@@ -11,6 +11,8 @@
  *
  * @package CSV_Import_and_Exporter
  */
+
+defined( 'ABSPATH' ) || exit;
 
 if ( class_exists( 'CSV_Import_and_Exporter' ) ) {
 	wp_die();
@@ -24,7 +26,7 @@ if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'csv-export', 'CSVIAE_CLI_Command' );
 }
 
-define( 'CSVIAE_PLUGIN_VERSION', '1.0.3' );
+define( 'CSVIAE_PLUGIN_VERSION', '1.1.0' );
 define( 'CSVIAE_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'CSVIAE_PLUGIN_NAME', trim( dirname( CSVIAE_PLUGIN_BASENAME ), '/' ) );
 define( 'CSVIAE_PLUGIN_IMPORT_NAME', 'wp-csv-importer' );
@@ -152,7 +154,7 @@ INNER JOIN $wpdb->posts
 WHERE $wpdb->posts.post_type = '%s'
 AND $wpdb->postmeta.meta_key NOT LIKE '%s'
 EOL;
-		return $wpdb->get_results( $wpdb->prepare( $query, array( $value_parameter, $pattern ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		return $wpdb->get_results( $wpdb->prepare( $query, array( $value_parameter, $pattern ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
 	}
 
 	/**

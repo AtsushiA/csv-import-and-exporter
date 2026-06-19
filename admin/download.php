@@ -5,6 +5,8 @@
  * @package CSV_Import_and_Exporter
  */
 
+defined( 'ABSPATH' ) || exit;
+
 if (
 	! isset( $_POST['type'] ) ||
 	! is_user_logged_in() ||

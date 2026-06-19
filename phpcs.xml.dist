@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<ruleset name="CSV Import and Exporter">
+	<description>Coding standards for CSV Import and Exporter.</description>
+
+	<!-- Files to check (own code only; import/ is bundled third-party). -->
+	<file>./csv-import-and-exporter.php</file>
+	<file>./classes/</file>
+	<file>./admin/</file>
+
+	<!-- Exclusions. -->
+	<exclude-pattern>./vendor/*</exclude-pattern>
+	<exclude-pattern>./node_modules/*</exclude-pattern>
+	<exclude-pattern>./tests/*</exclude-pattern>
+	<exclude-pattern>./import/*</exclude-pattern>
+	<exclude-pattern>./languages/*</exclude-pattern>
+
+	<!-- Show sniff codes and progress. -->
+	<arg value="ps"/>
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+
+	<!-- WordPress Coding Standards. -->
+	<rule ref="WordPress">
+		<!-- Legacy method names (e()/_()) and class file naming kept for back-compat. -->
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+		<!-- Public class names are part of the plugin's API and cannot be renamed. -->
+		<exclude name="PEAR.NamingConventions.ValidClassName.Invalid"/>
+		<!-- Japanese inline comments don't follow English end-punctuation rules. -->
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar"/>
+		<!-- Single-line @var property tags are self-explanatory. -->
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+	</rule>
+
+	<!-- PHP cross-version compatibility. -->
+	<rule ref="PHPCompatibilityWP"/>
+	<config name="testVersion" value="8.2-"/>
+
+	<config name="text_domain" value="wp-csv-im-n-exporter,csv-import-and-exporter"/>
+	<config name="minimum_wp_version" value="6.5"/>
+</ruleset>
