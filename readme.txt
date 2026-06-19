@@ -4,7 +4,7 @@ Donate link: http://www.amazon.co.jp/registry/wishlist/2TUGZOYJW8T4T/?_encoding=
 Tags: : csv, custom post, import, export, extract, import, csv import, csv importer, csv to custom post type, import, import CSV, wordpress csv import
 Requires at least: 3.0 or higher
 Tested up to: 6.8.1
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -213,5 +213,8 @@ function wp_csv_exporter_price_filter( $field, $post_id ) {
 
 
 == Changelog ==
+**1.1.0 - June 20, 2026**
+Added CI (phpcs, PHPUnit, Plugin Check), integration tests, a tagged-release build workflow, and direct-access guards.
+
 **1.0.0 - April 14, 2023**
 Initial release.
