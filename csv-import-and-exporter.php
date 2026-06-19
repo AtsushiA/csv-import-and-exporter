@@ -12,6 +12,8 @@
  * @package CSV_Import_and_Exporter
  */
 
+defined( 'ABSPATH' ) || exit;
+
 if ( class_exists( 'CSV_Import_and_Exporter' ) ) {
 	wp_die();
 }

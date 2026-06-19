@@ -5,6 +5,8 @@
  * @package CSV_Import_and_Exporter
  */
 
+defined( 'ABSPATH' ) || exit;
+
 switch ( $this->request( 'view' ) ) :
 	case 'setting':
 		$this->get_template( '/admin/setting' );

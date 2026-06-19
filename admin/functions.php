@@ -5,6 +5,8 @@
  * @package CSV_Import_and_Exporter
  */
 
+defined( 'ABSPATH' ) || exit;
+
 /**
  * Render a list of admin messages.
  *
