@@ -1,5 +1,7 @@
 # CSV Import and Exporter
 
+[![Try in WordPress Playground](https://img.shields.io/badge/Try%20in-WordPress%20Playground-3858e9?logo=wordpress)](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/AtsushiA/csv-import-and-exporter/main/blueprint.json)
+
 WordPress プラグイン。投稿タイプごとに CSV 形式でエクスポート／インポートができます。カスタムフィールド・カスタムタクソノミーに対応し、件数や日付範囲での絞り込みも可能です。
 
 **Version:** 1.1.0
